@@ -22,10 +22,10 @@ Open Ledger BOT
 
 1. **Clone The Repositories:**
    ```bash
-   git clone https://github.com/vonssy/Nodepay-BOT.git
+   git clone https://github.com/vonssy/OpenLedger-BOT.git
    ```
    ```bash
-   cd Nodepay-BOT
+   cd OpenLedger-BOT
    ```
 
 2. **Install Requirements:**
