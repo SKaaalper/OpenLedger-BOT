@@ -298,6 +298,63 @@ class OepnLedger:
                     await asyncio.sleep(2)
                 else:
                     return None
+    
+    async def tier_details(self, account: str, token: str, proxy=None, retries=5):
+        url = "https://rewardstn.openledger.xyz/api/v1/tier_details"
+        headers = {
+            **self.headers,
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+
+        }
+        for attempt in range(retries):
+            connector = ProxyConnector.from_url(proxy) if proxy else None
+            try:
+                async with ClientSession(connector=connector, timeout=ClientTimeout(total=60)) as session:
+                    async with session.get(url=url, headers=headers) as response:
+                        if response.status == 401:
+                            token = await self.renew_token(account, proxy)
+                            headers["Authorization"] = f"Bearer {token}"
+                            continue
+                        
+                        response.raise_for_status()
+                        result = await response.json()
+                        return result['data']['tierDetails']
+            except (Exception, ClientResponseError) as e:
+                if attempt < retries - 1:
+                    await asyncio.sleep(2)
+                else:
+                    return None
+    
+    async def claim_tier(self, account: str, token: str, tier_id: int, proxy=None, retries=5):
+        url = "https://rewardstn.openledger.xyz/api/v1/claim_tier"
+        data = json.dumps({"tierId":tier_id})
+        headers = {
+            **self.headers,
+            "Authorization": f"Bearer {token}",
+            "Content-Length": str(len(data)),
+            "Content-Type": "application/json"
+
+        }
+        for attempt in range(retries):
+            connector = ProxyConnector.from_url(proxy) if proxy else None
+            try:
+                async with ClientSession(connector=connector, timeout=ClientTimeout(total=60)) as session:
+                    async with session.put(url=url, headers=headers, data=data) as response:
+                        if response.status == 401:
+                            token = await self.renew_token(account, proxy)
+                            headers["Authorization"] = f"Bearer {token}"
+                            continue
+                        elif response.status == 420:
+                            return None
+                        
+                        response.raise_for_status()
+                        return await response.json()
+            except (Exception, ClientResponseError) as e:
+                if attempt < retries - 1:
+                    await asyncio.sleep(2)
+                else:
+                    return None
                 
     async def user_earning(self, account: str, token: str, proxy=None):
         while True:
@@ -373,6 +430,71 @@ class OepnLedger:
                     f"{Fore.WHITE + Style.BRIGHT} {self.hide_account(account)} {Style.RESET_ALL}"
                     f"{Fore.MAGENTA + Style.BRIGHT}-{Style.RESET_ALL}"
                     f"{Fore.CYAN + Style.BRIGHT} Check-In: {Style.RESET_ALL}"
+                    f"{Fore.RED + Style.BRIGHT}GET Data Failed{Style.RESET_ALL}"
+                    f"{Fore.CYAN + Style.BRIGHT} ]{Style.RESET_ALL}"
+                )
+            await asyncio.sleep(24 * 60 * 60)
+
+    async def process_claim_tier(self, account: str, token: str, proxy=None):
+        while True:
+            tiers = await self.tier_details(account, token, proxy)
+            if tiers:
+                completed = False
+                for tier in tiers:
+                    tier_id = tier['id']
+                    tier_name = tier['name']
+                    reward = tier['value']
+                    is_claimed = tier['claimStatus']
+
+                    if tier and not is_claimed:
+                        claim = await self.claim_tier(account, token, tier_id, proxy)
+                        if claim and claim['status'] == 'SUCCESS':
+                            self.log(
+                                f"{Fore.CYAN + Style.BRIGHT}[ Account:{Style.RESET_ALL}"
+                                f"{Fore.WHITE + Style.BRIGHT} {self.hide_account(account)} {Style.RESET_ALL}"
+                                f"{Fore.MAGENTA + Style.BRIGHT}-{Style.RESET_ALL}"
+                                f"{Fore.CYAN + Style.BRIGHT} Tier: {Style.RESET_ALL}"
+                                f"{Fore.WHITE + Style.BRIGHT}{tier_name}{Style.RESET_ALL}"
+                                f"{Fore.MAGENTA + Style.BRIGHT} - {Style.RESET_ALL}"
+                                f"{Fore.CYAN + Style.BRIGHT}Status:{Style.RESET_ALL}"
+                                f"{Fore.GREEN + Style.BRIGHT} Is Claimed {Style.RESET_ALL}"
+                                f"{Fore.MAGENTA + Style.BRIGHT}-{Style.RESET_ALL}"
+                                f"{Fore.CYAN + Style.BRIGHT} Reward: {Style.RESET_ALL}"
+                                f"{Fore.WHITE + Style.BRIGHT}{reward} PTS{Style.RESET_ALL}"
+                                f"{Fore.CYAN + Style.BRIGHT} ]{Style.RESET_ALL}"
+                            )
+                        else:
+                            self.log(
+                                f"{Fore.CYAN + Style.BRIGHT}[ Account:{Style.RESET_ALL}"
+                                f"{Fore.WHITE + Style.BRIGHT} {self.hide_account(account)} {Style.RESET_ALL}"
+                                f"{Fore.MAGENTA + Style.BRIGHT}-{Style.RESET_ALL}"
+                                f"{Fore.CYAN + Style.BRIGHT} Tier: {Style.RESET_ALL}"
+                                f"{Fore.WHITE + Style.BRIGHT}{tier_name}{Style.RESET_ALL}"
+                                f"{Fore.MAGENTA + Style.BRIGHT} - {Style.RESET_ALL}"
+                                f"{Fore.CYAN + Style.BRIGHT}Status:{Style.RESET_ALL}"
+                                f"{Fore.YELLOW + Style.BRIGHT} Not ELigible to Claim {Style.RESET_ALL}"
+                                f"{Fore.CYAN + Style.BRIGHT}]{Style.RESET_ALL}"
+                            )
+                        await asyncio.sleep(1)
+                    
+                    else:
+                        completed = True
+
+                if completed:
+                    self.log(
+                        f"{Fore.CYAN + Style.BRIGHT}[ Account:{Style.RESET_ALL}"
+                        f"{Fore.WHITE + Style.BRIGHT} {self.hide_account(account)} {Style.RESET_ALL}"
+                        f"{Fore.MAGENTA + Style.BRIGHT}-{Style.RESET_ALL}"
+                        f"{Fore.CYAN + Style.BRIGHT} Tier: {Style.RESET_ALL}"
+                        f"{Fore.GREEN + Style.BRIGHT}All Available Tier Is Completed{Style.RESET_ALL}"
+                        f"{Fore.CYAN + Style.BRIGHT} ]{Style.RESET_ALL}"
+                    )
+            else:
+                self.log(
+                    f"{Fore.CYAN + Style.BRIGHT}[ Account:{Style.RESET_ALL}"
+                    f"{Fore.WHITE + Style.BRIGHT} {self.hide_account(account)} {Style.RESET_ALL}"
+                    f"{Fore.MAGENTA + Style.BRIGHT}-{Style.RESET_ALL}"
+                    f"{Fore.CYAN + Style.BRIGHT} Tier: {Style.RESET_ALL}"
                     f"{Fore.RED + Style.BRIGHT}GET Data Failed{Style.RESET_ALL}"
                     f"{Fore.CYAN + Style.BRIGHT} ]{Style.RESET_ALL}"
                 )
@@ -737,6 +859,7 @@ class OepnLedger:
             await asyncio.gather(
                 self.user_earning(account, token, proxy),
                 self.process_checkin(account, token, proxy),
+                self.process_claim_tier(account, token, proxy),
                 self.connect_websocket(account, token, use_proxy, proxy)
             )
     

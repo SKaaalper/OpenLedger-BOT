@@ -10,6 +10,7 @@ Open Ledger BOT
   - Auto Run With Auto Proxy if u Choose 1 [Use [Monosans Proxy](https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/all.txt)]
   - Auto Run With Manual Proxy if u Choose 2 [Paste Ur personal proxy in manual_proxy.txt]
   - Auto Claim Daily Check-In
+  - Auto Claim Tier Reward
   - Auto Send Heartbeat Every 30 Seconds
   - Multi Accounts With Threads
 
