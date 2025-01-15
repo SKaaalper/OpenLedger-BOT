@@ -742,7 +742,7 @@ class OepnLedger:
     
     async def main(self):
         try:
-            with open('tokens.txt', 'r') as file:
+            with open('accounts.txt', 'r') as file:
                 accounts = [line.strip() for line in file if line.strip()]
 
             use_proxy_choice = await self.question()
