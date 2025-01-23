@@ -1,7 +1,7 @@
 # Open Ledger BOT
 Open Ledger BOT
 
-- Register Here : [Open Ledger Dashboard](https://testnet.openledger.xyz/?referral_code=vmgheiodeq)
+- Register Here : [Open Ledger Dashboard](https://testnet.openledger.xyz/?referral_code=5w7kpg2lna))
 - Download Extension : [Open Ledger Extension](https://chromewebstore.google.com/detail/openledger-node/ekbbplmjjgoobhdlffmgeokalelnmjjc)
 
 ## Features
