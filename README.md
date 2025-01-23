@@ -22,7 +22,7 @@ Open Ledger BOT
 
 1. **Clone The Repositories:**
    ```bash
-   git clone https://github.com/vonssy/OpenLedger-BOT.git
+   git clone https://github.com/SKaaalper/OpenLedger-BOT.git
    ```
    ```bash
    cd OpenLedger-BOT
